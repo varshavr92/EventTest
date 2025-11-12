@@ -13,6 +13,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
+import imageCompression from 'browser-image-compression';
 import { analyticsAPI, eventsAPI, bookingsAPI } from '../services/api';
 
 // Helper to resolve image URLs coming from backend. If the URL is already absolute, return it.
@@ -46,6 +47,7 @@ const AdminDashboard = ({ bookings: propBookings = [] }) => {
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [submittingEvent, setSubmittingEvent] = useState(false);
 
   // Report generation state
   const [showReportModal, setShowReportModal] = useState(false);
@@ -437,49 +439,48 @@ const AdminDashboard = ({ bookings: propBookings = [] }) => {
                         {event.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="flex gap-2">
-                        <button
-                          className="text-blue-400 hover:text-blue-300 text-sm font-medium"
-                            onClick={() => {
-                            setModalMode('edit');
-                            setEventForm({ ...event });
-                            setImageFile(null);
-                            setImagePreview(getImageUrl(event.imageUrl) || null);
-                            setShowEventModal(true);
-                          }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className={`text-sm font-medium px-2 py-1 rounded ${
-                            event.isActive
-                              ? 'text-orange-400 hover:text-orange-300 bg-orange-700 hover:bg-orange-600'
-                              : 'text-green-400 hover:text-green-300 bg-green-700 hover:bg-green-600'
-                          }`}
-                          onClick={async () => {
-                            const newActiveStatus = !event.isActive;
-                            const action = newActiveStatus ? 'activate' : 'deactivate';
-                            if (window.confirm(`Are you sure you want to ${action} this event?`)) {
-                              await eventsAPI.toggleActive(event._id, newActiveStatus);
-                              fetchAnalyticsAndEvents();
-                            }
-                          }}
-                        >
-                          {event.isActive ? 'Deactivate' : 'Activate'}
-                        </button>
-                        <button
-                          className="text-red-400 hover:text-red-300 text-sm font-medium"
-                          onClick={async () => {
-                            if (window.confirm('Delete this event?')) {
-                              await eventsAPI.delete(event._id);
-                              fetchAnalyticsAndEvents();
-                            }
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </div>
+                    <td className="py-3 px-4 flex gap-2">
+                      <button
+                        className="px-4 py-1 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-700"
+                        onClick={() => {
+                          setModalMode('edit');
+                          setEventForm({ ...event });
+                          setImageFile(null);
+                          setImagePreview(getImageUrl(event.imageUrl) || null);
+                          setShowEventModal(true);
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className={
+                          'px-4 py-1 rounded-lg font-semibold ' +
+                          (event.isActive
+                            ? 'bg-red-600 text-white hover:bg-red-700'
+                            : 'bg-green-600 text-white hover:bg-green-700')
+                        }
+                        onClick={async () => {
+                          const newActiveStatus = !event.isActive;
+                          const action = newActiveStatus ? 'activate' : 'deactivate';
+                          if (window.confirm(`Are you sure you want to ${action} this event?`)) {
+                            await eventsAPI.toggleActive(event._id, newActiveStatus);
+                            fetchAnalyticsAndEvents();
+                          }
+                        }}
+                      >
+                        {event.isActive ? 'Deactivate' : 'Activate'}
+                      </button>
+                      <button
+                        className="px-4 py-1 rounded-lg font-semibold bg-gray-700 text-gray-300 hover:bg-red-700 hover:text-red-300"
+                        onClick={async () => {
+                          if (window.confirm('Delete this event?')) {
+                            await eventsAPI.delete(event._id);
+                            fetchAnalyticsAndEvents();
+                          }
+                        }}
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -619,45 +620,53 @@ const AdminDashboard = ({ bookings: propBookings = [] }) => {
               <form
                 onSubmit={async (e) => {
                   e.preventDefault();
+                  setSubmittingEvent(true);
 
-                  // If an image file is selected, send as FormData (multipart/form-data)
-                  if (imageFile) {
-                    const fd = new FormData();
-                    fd.append('title', eventForm.title);
-                    fd.append('description', eventForm.description);
-                    fd.append('category', eventForm.category);
-                    fd.append('venue', eventForm.venue);
-                    fd.append('date', eventForm.date);
-                    fd.append('ticketPrice', String(eventForm.ticketPrice));
-                    fd.append('image', imageFile);
+                  try {
+                    // If an image file is selected, send as FormData (multipart/form-data)
+                    if (imageFile) {
+                      const fd = new FormData();
+                      fd.append('title', eventForm.title);
+                      fd.append('description', eventForm.description);
+                      fd.append('category', eventForm.category);
+                      fd.append('venue', eventForm.venue);
+                      fd.append('date', eventForm.date);
+                      fd.append('ticketPrice', String(eventForm.ticketPrice));
+                      fd.append('image', imageFile);
 
-                    if (modalMode === 'add') {
-                      await eventsAPI.create(fd);
+                      if (modalMode === 'add') {
+                        await eventsAPI.create(fd);
+                      } else {
+                        await eventsAPI.update(eventForm._id, fd);
+                      }
                     } else {
-                      await eventsAPI.update(eventForm._id, fd);
+                      // No image selected: send JSON as before
+                      const payload = {
+                        title: eventForm.title,
+                        description: eventForm.description,
+                        category: eventForm.category,
+                        venue: eventForm.venue,
+                        date: eventForm.date,
+                        ticketPrice: eventForm.ticketPrice
+                      };
+                      if (modalMode === 'add') {
+                        await eventsAPI.create(payload);
+                      } else {
+                        await eventsAPI.update(eventForm._id, payload);
+                      }
                     }
-                  } else {
-                    // No image selected: send JSON as before
-                    const payload = {
-                      title: eventForm.title,
-                      description: eventForm.description,
-                      category: eventForm.category,
-                      venue: eventForm.venue,
-                      date: eventForm.date,
-                      ticketPrice: eventForm.ticketPrice
-                    };
-                    if (modalMode === 'add') {
-                      await eventsAPI.create(payload);
-                    } else {
-                      await eventsAPI.update(eventForm._id, payload);
-                    }
+
+                    // Reset modal state
+                    setShowEventModal(false);
+                    setImageFile(null);
+                    setImagePreview(null);
+                    fetchAnalyticsAndEvents();
+                  } catch (error) {
+                    console.error('Error saving event:', error);
+                    alert('Failed to save event. Please try again.');
+                  } finally {
+                    setSubmittingEvent(false);
                   }
-
-                  // Reset modal state
-                  setShowEventModal(false);
-                  setImageFile(null);
-                  setImagePreview(null);
-                  fetchAnalyticsAndEvents();
                 }}
                 className="space-y-4"
               >
@@ -728,12 +737,27 @@ const AdminDashboard = ({ bookings: propBookings = [] }) => {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={e => {
+                    onChange={async (e) => {
                       const file = e.target.files && e.target.files[0];
-                      setImageFile(file || null);
                       if (file) {
-                        setImagePreview(URL.createObjectURL(file));
+                        try {
+                          // Compress the image before setting it
+                          const options = {
+                            maxSizeMB: 1, // Maximum size in MB
+                            maxWidthOrHeight: 800, // Maximum width or height
+                            useWebWorker: true, // Use web worker for better performance
+                          };
+                          const compressedFile = await imageCompression(file, options);
+                          setImageFile(compressedFile);
+                          setImagePreview(URL.createObjectURL(compressedFile));
+                        } catch (error) {
+                          console.error('Error compressing image:', error);
+                          // Fallback to original file if compression fails
+                          setImageFile(file);
+                          setImagePreview(URL.createObjectURL(file));
+                        }
                       } else {
+                        setImageFile(null);
                         setImagePreview(null);
                       }
                     }}
@@ -753,14 +777,16 @@ const AdminDashboard = ({ bookings: propBookings = [] }) => {
                     type="button"
                     onClick={() => setShowEventModal(false)}
                     className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+                    disabled={submittingEvent}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={submittingEvent}
                   >
-                    {modalMode === 'add' ? 'Add Event' : 'Update Event'}
+                    {submittingEvent ? 'Saving...' : (modalMode === 'add' ? 'Add Event' : 'Update Event')}
                   </button>
                 </div>
               </form>

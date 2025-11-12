@@ -8,7 +8,7 @@ const Footer = ({ setCurrentView, setSelectedCategory }) => (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-xl font-bold">Eventure</span>
+            <span className="text-xl font-bold text-gradient">Eventure</span>
           </div>
           <p className="text-gray-400">
             Your premier destination for discovering and booking amazing events.

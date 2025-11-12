@@ -463,6 +463,7 @@ const UserDashboard = ({ bookings, setCurrentView, setSelectedEvent, setBookings
         setUserBookings(fetchedBookings);
         setBookings(fetchedBookings);
         const recommendations = await bookingsAPI.getRecommendations();
+        console.log('Recommendations from backend:', recommendations);
         setRecommendedEvents(recommendations.slice(0, 3));
       } catch (err) {
         console.error("Error fetching user data:", err);
@@ -712,6 +713,28 @@ const UserDashboard = ({ bookings, setCurrentView, setSelectedEvent, setBookings
               </div>
             );
           })}
+
+          {/* Recommended Events Section for users with bookings */}
+          {recommendedEvents.length > 0 && (
+            <div className="mt-16">
+              <div className="text-center mb-10">
+                <h2 className="heading-2 mb-4 text-white">Recommended for You</h2>
+                <p className="text-gray-300">Based on your booking history</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {recommendedEvents.map(event => (
+                  <EventCard
+                    key={event._id}
+                    event={event}
+                    onClick={() => {
+                      setSelectedEvent && setSelectedEvent(event);
+                      setCurrentView && setCurrentView('details');
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -149,4 +149,17 @@ export const authAPI = {
     method: 'POST',
     body: JSON.stringify(data),
   }),
+  updateProfile: (data) => apiRequest('/auth/update-profile', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+  changePassword: (data) => apiRequest('/auth/change-password', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+  getMe: () => apiRequest('/auth/me'),
+  uploadProfileImage: (formData) => apiRequest('/auth/upload-profile-image', {
+    method: 'POST',
+    body: formData,
+  }),
 };

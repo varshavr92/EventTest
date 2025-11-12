@@ -213,14 +213,10 @@ router.post('/', authenticateToken, requireAdmin, upload.single('image'), async 
     let imageUrl = null;
 
     if (req.file) {
-      // Upload to Cloudinary
+      // Upload to Cloudinary (no transformations since images are already compressed on frontend)
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: 'event-management/events',
-        public_id: `event-${Date.now()}`,
-        transformation: [
-          { width: 800, height: 600, crop: 'fill' },
-          { quality: 'auto' }
-        ]
+        public_id: `event-${Date.now()}`
       });
       imageUrl = result.secure_url;
 
@@ -254,14 +250,10 @@ router.put('/:id', authenticateToken, requireAdmin, upload.single('image'), asyn
     const update = { ...req.body };
 
     if (req.file) {
-      // Upload to Cloudinary
+      // Upload to Cloudinary (no transformations since images are already compressed on frontend)
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: 'event-management/events',
-        public_id: `event-${Date.now()}`,
-        transformation: [
-          { width: 800, height: 600, crop: 'fill' },
-          { quality: 'auto' }
-        ]
+        public_id: `event-${Date.now()}`
       });
       update.imageUrl = result.secure_url;
 

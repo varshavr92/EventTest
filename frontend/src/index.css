@@ -92,7 +92,7 @@ input:-webkit-autofill {
 
 /* Utility classes */
 .text-gradient {
-  @apply bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent;
+  @apply bg-gradient-to-r from-[#f707fe] to-blue-500 bg-clip-text text-transparent;
 }
 
 .shadow-professional {

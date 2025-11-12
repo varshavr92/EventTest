@@ -2,7 +2,10 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { sendOTP, sendSignupConfirmation } = require('../utils/email');
-const { authenticateToken } = require('../middleware/auth');//new line
+const { authenticateToken } = require('../middleware/auth');
+const cloudinary = require('../config/cloudinary');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' }); // Temporary storage for multer
 
 const router = express.Router();
 
@@ -195,10 +198,50 @@ router.put('/change-password', authenticateToken, async (req, res) => {
 // ✅ [NEW ROUTE] Get Current Logged-in User
 router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('name email role');
+    const user = await User.findById(req.user.id).select('name email role profileImage');
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json({ user });
   } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// ✅ [NEW ROUTE] Upload Profile Image
+router.post('/upload-profile-image', authenticateToken, upload.single('profileImage'), async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'profile-images',
+      public_id: `user-${userId}`,
+      overwrite: true,
+      transformation: [{ width: 150, height: 150, crop: 'fill' }]
+    });
+
+    // Update user profile image
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.profileImage = result.secure_url;
+    await user.save();
+
+    // Clean up temp file (optional, multer handles it)
+    const fs = require('fs');
+    fs.unlinkSync(req.file.path);
+
+    res.json({
+      message: 'Profile image uploaded successfully',
+      profileImage: result.secure_url
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
