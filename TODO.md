@@ -1,12 +1,16 @@
-# TODO: Implement Local AI Recommendations with @xenova/transformers
+# TODO: Make Navbar Responsive
 
-- [x] Add embedding field to Event model (array of numbers)
-- [x] Create UserSearch model with query and embedding fields
-- [x] Update events route POST /api/events to generate and store embeddings on creation
-- [x] Update recommendation route to implement POST /api/search: Save user query with embedding
-- [x] Update recommendation route to implement POST /api/events: Create event with embedding (integrate with existing events route)
-- [x] Update recommendation route to implement GET /api/recommendations/:userId: Aggregate user embeddings and rank events by cosine similarity
-- [x] Update frontend API calls in api.js to use new recommendation endpoints
-- [ ] Seed embeddings for existing events
-- [ ] Test embedding generation and similarity calculation
-- [ ] Verify frontend integration
+## Tasks
+- [x] Add mobile menu overlay/sidebar to Navigation.jsx that slides in when showMobileMenu is true
+- [x] Include navigation links (Home, Events, About, Contact, My Bookings/Admin) in vertical list for mobile
+- [x] Add user menu options (profile info, settings, logout) for logged-in users in mobile menu
+- [x] Style mobile menu with Tailwind classes for responsive design and animations
+- [x] Test navbar responsiveness on different screen sizes
+
+## Dependent Files
+- frontend/src/components/Navigation.jsx
+
+## Followup Steps
+- [x] Run the frontend app and verify mobile menu toggles correctly on small screens
+- [x] Check that all navigation options are accessible on mobile
+- [x] Ensure user menu works properly on mobile

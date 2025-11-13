@@ -97,9 +97,9 @@ const Navigation = ({ currentView, setCurrentView, userRole, setUserRole, showMo
 
   return (
     <>
-      <nav className="sticky top-0 z-50 bg-gradient-to-r from-gray-800 to-gray-900 shadow-professional border-b border-gray-700">
+      <nav className="sticky top-0 z-50 bg-gradient-to-r from-gray-800/90 to-gray-900/90 backdrop-blur-md shadow-2xl border-b border-gray-700/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+          <div className="flex justify-between items-center h-16">
             {/* ===== Logo ===== */}
             <div
               className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
@@ -247,6 +247,188 @@ const Navigation = ({ currentView, setCurrentView, userRole, setUserRole, showMo
           </div>
         </div>
       </nav>
+
+      {/* ===== Mobile Menu Overlay ===== */}
+      {showMobileMenu && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={() => setShowMobileMenu(false)}
+          ></div>
+
+          {/* Menu Panel */}
+          <div className="absolute right-0 top-0 h-full w-80 bg-gradient-to-b from-gray-800 to-gray-900 shadow-xl border-l border-gray-700 transform transition-transform duration-300 ease-in-out">
+            <div className="p-6">
+              {/* Close Button */}
+              <button
+                className="absolute top-4 right-4 p-2 rounded-xl hover:bg-gray-700 transition-colors"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <X size={24} className="text-gray-300" />
+              </button>
+
+              {/* Logo */}
+              <div className="flex items-center gap-3 mb-8 mt-8">
+                <img src={logo} alt="Eventure Logo" className="h-8 w-auto" />
+                <span className="text-xl font-bold text-gradient">Eventure</span>
+              </div>
+
+              {/* Navigation Links */}
+              <div className="space-y-4">
+                {userRole !== 'admin' && (
+                  <>
+                    <button
+                      onClick={() => {
+                        setCurrentView('home');
+                        setShowMobileMenu(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 rounded-xl font-semibold text-sm uppercase tracking-wide transition-all ${
+                        currentView === 'home'
+                          ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white shadow-md'
+                          : 'text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-gray-600 hover:to-gray-700'
+                      }`}
+                    >
+                      Home
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setCurrentView('events');
+                        setShowMobileMenu(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 rounded-xl font-semibold text-sm uppercase tracking-wide transition-all ${
+                        currentView === 'events'
+                          ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white shadow-md'
+                          : 'text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-gray-600 hover:to-gray-700'
+                      }`}
+                    >
+                      Events
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setCurrentView('about');
+                        setShowMobileMenu(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 rounded-xl font-semibold text-sm uppercase tracking-wide transition-all ${
+                        currentView === 'about'
+                          ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white shadow-md'
+                          : 'text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-gray-600 hover:to-gray-700'
+                      }`}
+                    >
+                      About
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setCurrentView('contact');
+                        setShowMobileMenu(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 rounded-xl font-semibold text-sm uppercase tracking-wide transition-all ${
+                        currentView === 'contact'
+                          ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white shadow-md'
+                          : 'text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-gray-600 hover:to-gray-700'
+                      }`}
+                    >
+                      Contact
+                    </button>
+
+                    {userRole === 'user' && (
+                      <button
+                        onClick={() => {
+                          setCurrentView('dashboard');
+                          setShowMobileMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 rounded-xl font-semibold text-sm uppercase tracking-wide transition-all ${
+                          currentView === 'dashboard'
+                            ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white shadow-md'
+                            : 'text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-gray-600 hover:to-gray-700'
+                        }`}
+                      >
+                        My Bookings
+                      </button>
+                    )}
+                  </>
+                )}
+
+                {userRole === 'admin' && (
+                  <button
+                    onClick={() => {
+                      setCurrentView('admin');
+                      setShowMobileMenu(false);
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-xl font-semibold text-sm uppercase tracking-wide transition-all ${
+                      currentView === 'admin'
+                        ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white shadow-md'
+                        : 'text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-gray-600 hover:to-gray-700'
+                    }`}
+                  >
+                    Admin
+                  </button>
+                )}
+              </div>
+
+              {/* User Section */}
+              <div className="mt-8 pt-6 border-t border-gray-700">
+                {!userRole ? (
+                  <button
+                    onClick={() => {
+                      setCurrentView('login');
+                      setShowMobileMenu(false);
+                    }}
+                    className="w-full btn-primary text-sm font-semibold shadow-lg hover:shadow-xl py-3"
+                  >
+                    Login
+                  </button>
+                ) : (
+                  <div className="space-y-4">
+                    {/* User Info */}
+                    <div className="flex items-center gap-3">
+                      {profileImage ? (
+                        <img
+                          src={profileImage}
+                          alt="Profile"
+                          className="w-10 h-10 rounded-full object-cover border-2 border-gray-600"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center">
+                          <User size={20} className="text-gray-300" />
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-gray-100 font-semibold text-base">{name || 'User'}</p>
+                        <p className="text-gray-400 text-sm">{email || ''}</p>
+                      </div>
+                    </div>
+
+                    {/* User Menu Options */}
+                    <button
+                      onClick={() => {
+                        setShowSettings(true);
+                        setShowMobileMenu(false);
+                      }}
+                      className="flex items-center gap-3 w-full text-left text-gray-300 hover:text-white font-medium py-2 px-3 rounded-lg hover:bg-gray-700 transition-colors"
+                    >
+                      <Settings size={18} /> Settings
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setShowMobileMenu(false);
+                      }}
+                      className="flex items-center gap-3 w-full text-left text-red-400 hover:text-red-500 font-medium py-2 px-3 rounded-lg hover:bg-red-900 hover:bg-opacity-20 transition-colors"
+                    >
+                      <LogOut size={18} /> Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ✅ SETTINGS DIALOG */}
       {showSettings && (
