@@ -73,7 +73,7 @@ export const bookingsAPI = {
     method: 'POST',
     body: JSON.stringify(bookingData),
   }),
-  getRecommendations: () => apiRequest('/bookings/recommendations'),
+  // getRecommendations: () => apiRequest('/bookings/recommendations'),
   // downloadTicket: async (bookingId) => {
   //   const token = getAuthToken();
   //   const response = await fetch(`${API_BASE_URL}/bookings/${bookingId}/download`, {
@@ -105,6 +105,19 @@ export const bookingsAPI = {
   return blob;
 },
 
+};
+
+// Recommendations API
+export const recommendationsAPI = {
+  search: (searchData) => apiRequest('/recommendations/search', {
+    method: 'POST',
+    body: JSON.stringify(searchData),
+  }),
+  createEvent: (eventData) => apiRequest('/recommendations/events', {
+    method: 'POST',
+    body: JSON.stringify(eventData),
+  }),
+  getRecommendations: (userId) => apiRequest(`/recommendations/${userId}`),
 };
 
 // Analytics API (Admin only)

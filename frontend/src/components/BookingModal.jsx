@@ -445,7 +445,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, CreditCard } from 'lucide-react';
-import QRCode from 'qrcode';
 import axios from 'axios';
 import { bookingsAPI } from '../services/api';
 
@@ -464,7 +463,6 @@ const BookingModal = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
 
   // Load Razorpay Script
   useEffect(() => {
@@ -475,15 +473,7 @@ const BookingModal = ({
     return () => document.body.removeChild(script);
   }, []);
 
-  // Generate QR Code after booking confirmation
-  useEffect(() => {
-    if (selectedEvent && bookingStep === 2) {
-      const bookingData = `Event: ${selectedEvent.title}\nDate: ${new Date(selectedEvent.date).toLocaleDateString()}\nTime: ${selectedEvent.time}\nTickets: ${selectedTickets}\nTotal: ₹${(selectedEvent.ticketPrice || selectedEvent.price) * selectedTickets + 5}`;
-      QRCode.toDataURL(bookingData, { width: 150, margin: 1 })
-        .then(url => setQrCodeUrl(url))
-        .catch(err => console.error('QR Code generation failed:', err));
-    }
-  }, [selectedEvent, selectedTickets, bookingStep]);
+
 
   if (!showBookingModal || !selectedEvent) return null;
 
@@ -682,12 +672,7 @@ const BookingModal = ({
                   </div>
                 </div>
 
-                {qrCodeUrl && (
-                  <div className="mt-4 text-center">
-                    <p className="text-sm font-medium mb-2 text-white">Your Booking QR Code</p>
-                    <img src={qrCodeUrl} alt="Booking QR Code" className="mx-auto border border-gray-600 rounded-lg" />
-                  </div>
-                )}
+
               </div>
 
               <button

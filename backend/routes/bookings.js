@@ -203,11 +203,12 @@ router.get('/recommendations', authenticateToken, async (req, res) => {
 
     console.log(`📊 Recommendations request for user ${req.user.id}: interests=${interestsArray}, search=${searchQuery}, clicked=${clickedEventId}`);
 
-    const recommendations = await getRecommendations(req.user.id, interestsArray, searchQuery, clickedEventId);
+  const result = await getRecommendations(req.user.id, interestsArray, searchQuery, clickedEventId);
 
-    console.log(`✅ Returned ${recommendations.length} recommendations for user ${req.user.id}`);
+  const count = Array.isArray(result.recommendations) ? result.recommendations.length : 0;
+  console.log(`✅ Returned ${count} recommendations for user ${req.user.id} (method=${result.method})`);
 
-    res.json(recommendations);
+  res.json({ success: true, recommendations: result.recommendations || [], method: result.method });
   } catch (error) {
     console.error('❌ Recommendations API error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });

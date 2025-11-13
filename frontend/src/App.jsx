@@ -9,6 +9,7 @@ import ForgotPassword from './components/ForgotPassword';
 import UserDashboard from './components/UserDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import AboutUs from './components/AboutUs';
+import ContactUs from './components/ContactUs';
 import BookingModal from './components/BookingModal';
 import Footer from './components/Footer';
 import BookingConfirmation from './components/BookingConfirmation';
@@ -124,6 +125,11 @@ const App = () => {
       {currentView === 'about' && (
         <AboutUs />
       )}
+
+      {currentView === 'contact' && (
+        <ContactUs />
+      )}
+
       {currentView === 'confirmation' && (
         <BookingConfirmation
           bookingData={bookingData}

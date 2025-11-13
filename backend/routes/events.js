@@ -142,6 +142,21 @@ const fs = require('fs');
 const Event = require('../models/Event');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const cloudinary = require('../config/cloudinary');
+const { pipeline } = require("@xenova/transformers");
+
+// Load MiniLM model once
+let embedder;
+(async () => {
+  console.log("🔄 Loading local embedding model for events...");
+  embedder = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
+  console.log("✅ MiniLM model loaded for events");
+})();
+
+// Get embedding
+async function getEmbedding(text) {
+  const output = await embedder(text, { pooling: "mean", normalize: true });
+  return Array.from(output.data);
+}
 
 const router = express.Router();
 
@@ -224,6 +239,10 @@ router.post('/', authenticateToken, requireAdmin, upload.single('image'), async 
       fs.unlinkSync(req.file.path);
     }
 
+    // Generate embedding for the event
+    const eventText = `${title} ${description}`;
+    const embedding = await getEmbedding(eventText);
+
     const event = await Event.create({
       title,
       description,
@@ -232,7 +251,8 @@ router.post('/', authenticateToken, requireAdmin, upload.single('image'), async 
       date,
       ticketPrice,
       imageUrl,
-      createdBy: req.user.id
+      createdBy: req.user.id,
+      embedding
     });
     res.status(201).json(event);
   } catch (error) {

@@ -1,6 +1,9 @@
 const express = require("express");
 const Event = require("../models/Event");
+const UserSearch = require("../models/UserSearch");
 const OpenAI = require("openai");
+const { generateEmbedding } = require("../utils/embeddingEngine");
+const { getRecommendedEventsByEmbedding, getRecommendations } = require("../utils/recommendations");
 
 const router = express.Router();
 
@@ -19,91 +22,73 @@ try {
   console.error('Failed to initialize OpenAI:', error);
 }
 
-router.post("/", async (req, res) => {
+// 🔹 POST /api/recommendation/search - Save user search with embedding
+router.post("/search", async (req, res) => {
   try {
-    const { interests, userId } = req.body;
-    console.log("User interests:", interests);
+    const { userId, query } = req.body;
 
-    // Step 1️⃣: Get all existing events from database
-    const allEvents = await Event.find();
-    const eventText = allEvents.map(e => `${e.title}: ${e.description}`).join("\n");
+    if (!userId || !query) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "userId and query are required" 
+      });
+    }
 
-    // Step 2️⃣: Prepare AI prompt
-    const prompt = `
-    The user is interested in "${interests}".
-    From this list of existing events:
-    ${eventText}
+    console.log(`\n🔍 Processing search: "${query}" for user ${userId}`);
 
-    Recommend 3 new or existing events that match the interest.
-    For new ones, generate realistic details (venue, date, time, price, category, imageUrl).
-    Return ONLY a valid JSON array like:
-    [
-      {
-        "title": "Event Title",
-        "description": "Short event description",
-        "venue": "Venue Name",
-        "date": "2025-06-10",
-        "time": "6:00 PM",
-        "price": 300,
-        "category": "Music",
-        "imageUrl": "https://example.com/sample.jpg"
-      }
-    ]
-    `;
+    // Generate embedding for the search query
+    const embedding = await generateEmbedding(query);
 
-    // Step 3️⃣: Request OpenAI
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.8,
+    // Save the search with embedding
+    const userSearch = new UserSearch({
+      userId,
+      query,
+      embedding
     });
 
-    // Step 4️⃣: Clean the AI output
-    let aiText = response.choices[0].message.content || "";
-    aiText = aiText.replace(/```json|```/g, "").trim();
+    await userSearch.save();
+    console.log(`✓ Saved search with embedding`);
 
-    let recommendations;
-    try {
-      recommendations = JSON.parse(aiText);
-    } catch (err) {
-      console.error("Invalid AI JSON:", aiText);
-      return res.status(500).json({ message: "Invalid AI response" });
-    }
-
-    // Step 5️⃣: Save new AI-generated events safely
-    const savedEvents = [];
-    for (const rec of recommendations) {
-      const exists = await Event.findOne({ title: rec.title });
-      if (!exists) {
-        const newEvent = new Event({
-          title: rec.title,
-          description: rec.description,
-          venue: rec.venue,
-          date: new Date(rec.date) || new Date(),
-          time: rec.time || "10:00 AM",
-          ticketPrice: rec.price || 100,
-          category: rec.category || "General",
-          imageUrl:
-  rec.imageUrl && rec.imageUrl.startsWith("http")
-    ? rec.imageUrl
-    : `https://source.unsplash.com/600x400/?${encodeURIComponent(rec.category || rec.title || "event")}`,
-          createdBy: userId || null, // ✅ Avoid validation error
-          createdByAI: true,         // ✅ Mark as AI event
-        });
-        const saved = await newEvent.save();
-        savedEvents.push(saved);
-      } else {
-        savedEvents.push(exists);
-      }
-    }
-
-    // Step 6️⃣: Send back recommendations
-    res.json({ recommendations: savedEvents });
-
+    res.status(200).json({
+      success: true,
+      message: "Search saved successfully",
+      embedding
+    });
   } catch (error) {
-    console.error("AI Recommendation Error:", error.message);
-    res.status(500).json({ message: "Failed to generate AI recommendations" });
+    console.error("❌ Error in /search endpoint:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Failed to process search"
+    });
   }
 });
+
+// 🔹 GET /api/recommendation/:userId - Get personalized recommendations
+router.get("/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const limit = parseInt(req.query.limit) || 10;
+
+    console.log(`\n📊 Getting recommendations for user: ${userId}`);
+
+    // Get booking-aware recommendations (booking -> embedding -> AI)
+    const result = await getRecommendations(userId, [], '', null);
+
+    res.status(200).json({
+      success: true,
+      method: result.method,
+      count: Array.isArray(result.recommendations) ? result.recommendations.length : 0,
+      recommendations: result.recommendations || []
+    });
+  } catch (error) {
+    console.error("❌ Error in /recommendations endpoint:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Failed to get recommendations"
+    });
+  }
+});
+
+
 
 module.exports = router;

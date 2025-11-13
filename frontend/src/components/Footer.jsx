@@ -21,7 +21,7 @@ const Footer = ({ setCurrentView, setSelectedCategory }) => (
             <li><button onClick={() => setCurrentView('home')} className="hover:text-white">Home</button></li>
             <li><button onClick={() => setCurrentView('events')} className="hover:text-white">Browse Events</button></li>
             <li><button onClick={() => setCurrentView('about')} className="hover:text-white">About Us</button></li>
-            <li><button className="hover:text-white">Contact</button></li>
+            <li><button onClick={() => setCurrentView('contact')} className="hover:text-white">Contact</button></li>
           </ul>
         </div>
         

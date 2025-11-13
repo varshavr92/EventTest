@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, MapPin, Clock, Download, Check, ArrowRight, Ticket, Hash, Sparkles } from 'lucide-react';
 import QRCode from 'qrcode';
-import { bookingsAPI } from '../services/api';
+import { bookingsAPI, eventsAPI } from '../services/api';
 
 const BookingConfirmation = ({ bookingData }) => {
   const [qrCodeUrl, setQrCodeUrl] = useState('');
@@ -30,11 +30,45 @@ const BookingConfirmation = ({ bookingData }) => {
 
   useEffect(() => {
     if (currentBookingData) {
-      const qrData = `Booking ID: ${currentBookingData._id}\nEvent: ${currentBookingData.eventId?.title}\nDate: ${new Date(currentBookingData.eventId?.date).toLocaleDateString()}\nTime: ${currentBookingData.eventId?.time}\nTickets: ${currentBookingData.tickets}\nTotal: $${currentBookingData.totalAmount}`;
+      const eventForQr = currentBookingData.eventId || {};
+      const safeDate = (() => {
+        try {
+          const d = new Date(eventForQr.date);
+          return isNaN(d.getTime()) ? (eventForQr.date || 'Date not available') : d.toLocaleDateString();
+        } catch (e) {
+          return eventForQr.date || 'Date not available';
+        }
+      })();
+      const safeVenue = eventForQr.venue || eventForQr.location || eventForQr.venueName || 'Venue not available';
+
+      const qrData = `Booking ID: ${currentBookingData._id}\nEvent: ${eventForQr.title}\nDate: ${safeDate}\nVenue: ${safeVenue}`;
       QRCode.toDataURL(qrData, { width: 200, margin: 1 })
         .then(url => setQrCodeUrl(url))
         .catch(err => console.error('QR Code generation failed:', err));
     }
+  }, [currentBookingData]);
+
+  // If event details are not populated (eventId is an ID string), fetch the event
+  useEffect(() => {
+    const loadEventIfNeeded = async () => {
+      if (!currentBookingData) return;
+      const evt = currentBookingData.eventId;
+      // If eventId is a string (ObjectId) or missing key fields, fetch the event
+      const needsFetch = typeof evt === 'string' || !evt || (!evt.title && !evt.name && !evt.eventName);
+      if (needsFetch) {
+        try {
+          const id = typeof evt === 'string' ? evt : (evt && evt._id) || evt;
+          if (!id) return;
+          const fetched = await eventsAPI.getById(id);
+          // eventsAPI returns whole event object
+          setCurrentBookingData(prev => ({ ...prev, eventId: fetched }));
+        } catch (err) {
+          console.error('Failed to fetch event details for booking confirmation:', err);
+        }
+      }
+    };
+
+    loadEventIfNeeded();
   }, [currentBookingData]);
 
   const handleDownloadTicket = async () => {
@@ -74,6 +108,25 @@ const BookingConfirmation = ({ bookingData }) => {
 
   const event = currentBookingData.eventId;
   const bookingRef = currentBookingData._id.slice(-8).toUpperCase();
+  // Normalize event fields with common fallbacks
+  const eventTitle = event?.title || event?.name || event?.eventName || 'Event';
+  const rawDate = event?.date || event?.startDate || event?.eventDate || event?.schedule?.date || event?.when;
+  const safeDate = (() => {
+    if (!rawDate) return 'Date not available';
+    try {
+      const d = new Date(rawDate);
+      if (isNaN(d.getTime())) return String(rawDate);
+      return d.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch (e) {
+      return String(rawDate);
+    }
+  })();
+  const eventVenue = event?.venue || event?.location || event?.place || event?.venueName || event?.address || 'Venue not available';
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{background: 'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%)'}}>
@@ -114,35 +167,24 @@ const BookingConfirmation = ({ bookingData }) => {
             <div className="space-y-6">
               <div>
                 <h3 className="text-2xl font-bold text-white mb-4 bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
-                  {event?.title}
+                          {eventTitle}
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-xl">
                     <Calendar size={20} className="text-blue-400" />
                     <div>
                       <p className="text-xs text-gray-400 uppercase tracking-wide">Date</p>
                       <p className="text-white font-medium">
-                        {event && new Date(event.date).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          month: 'long',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
+                        {safeDate}
                       </p>
                     </div>
                   </div>
+
                   <div className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-xl">
-                    <Clock size={20} className="text-green-400" />
-                    <div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wide">Time</p>
-                      <p className="text-white font-medium">{event?.time}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-xl md:col-span-2">
                     <MapPin size={20} className="text-red-400" />
                     <div>
                       <p className="text-xs text-gray-400 uppercase tracking-wide">Venue</p>
-                      <p className="text-white font-medium">{event?.venue}</p>
+                      <p className="text-white font-medium">{eventVenue}</p>
                     </div>
                   </div>
                 </div>

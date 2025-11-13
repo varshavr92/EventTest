@@ -146,6 +146,17 @@ const Navigation = ({ currentView, setCurrentView, userRole, setUserRole, showMo
                     About
                   </button>
 
+                  <button
+                    onClick={() => setCurrentView('contact')}
+                    className={`px-4 py-2 rounded-xl font-semibold text-sm uppercase tracking-wide transition-all ${
+                      currentView === 'contact'
+                        ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white shadow-md'
+                        : 'text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-gray-600 hover:to-gray-700'
+                    }`}
+                  >
+                    Contact
+                  </button>
+
                   {userRole === 'user' && (
                     <button
                       onClick={() => setCurrentView('dashboard')}

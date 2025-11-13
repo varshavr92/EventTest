@@ -52,10 +52,13 @@ const LoginPage = ({ setUserRole, setCurrentView }) => {
       }
 
       // success (for both signup and login)
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userRole', data.user.role);
+     localStorage.setItem('token', data.token);
+     localStorage.setItem('userRole', data.user.role);
       localStorage.setItem('userName', data.user.name);
       localStorage.setItem('userEmail', data.user.email);
+      localStorage.setItem('userId', data.user._id);
+      localStorage.setItem('user', JSON.stringify(data.user)); // ✅ Add this line
+
 
       setUserRole(data.user.role);
       setCurrentView(data.user.role === 'admin' ? 'admin' : 'home');
