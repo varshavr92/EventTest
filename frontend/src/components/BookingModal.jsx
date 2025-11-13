@@ -508,7 +508,7 @@ const BookingModal = ({
       console.log('handleRazorpayPayment: loading set to true');
       const totalAmount = (selectedEvent.ticketPrice || selectedEvent.price) * selectedTickets + 5;
 
-      const { data } = await axios.post('http://localhost:5000/api/payment/orders', {
+      const { data } = await axios.post('/api/payment/orders', {
         amount: totalAmount * 100,
       });
 
@@ -521,7 +521,7 @@ const BookingModal = ({
         order_id: data.id,
         handler: async function (response) {
           try {
-            const verify = await axios.post('http://localhost:5000/api/payment/verify', response);
+            const verify = await axios.post('/api/payment/verify', response);
             if (verify.data.success) {
               try {
                 await handleBooking();

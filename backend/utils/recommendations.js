@@ -6,12 +6,12 @@
 const UserSearch = require('../models/UserSearch');
 const Event = require('../models/Event');
 const Booking = require('../models/Booking');
-const OpenAI = require('openai');
+// const OpenAI = require('openai');
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize OpenAI client (commented out to avoid startup error)
+// const openai = new OpenAI({
+//   apiKey: process.env.OPENAI_API_KEY,
+// });
 
 /**
  * Calculate cosine similarity between two vectors
@@ -175,24 +175,30 @@ const getAIRecommendations = async (interests, userId) => {
     ]
     `;
 
-    // Step 3: Request OpenAI
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.8,
-    });
+    // Step 3: Request OpenAI (commented out to avoid error)
+    // const response = await openai.chat.completions.create({
+    //   model: "gpt-4o-mini",
+    //   messages: [{ role: "user", content: prompt }],
+    //   temperature: 0.8,
+    // });
 
-    // Step 4: Clean the AI output
-    let aiText = response.choices[0].message.content || "";
-    aiText = aiText.replace(/```json|```/g, "").trim();
+    // Step 4: Clean the AI output (mock response for now)
+    // let aiText = response.choices[0].message.content || "";
+    // aiText = aiText.replace(/```json|```/g, "").trim();
 
-    let recommendations;
-    try {
-      recommendations = JSON.parse(aiText);
-    } catch (err) {
-      console.error("Invalid AI JSON:", aiText);
-      throw new Error("Invalid AI response");
-    }
+    // Mock recommendations to avoid OpenAI error
+    const recommendations = [
+      {
+        title: "Mock Event 1",
+        description: "A mock event for testing",
+        venue: "Mock Venue",
+        date: "2025-06-10",
+        time: "6:00 PM",
+        price: 300,
+        category: "General",
+        imageUrl: "https://source.unsplash.com/600x400/?event"
+      }
+    ];
 
     // Step 5: Save AI-generated events if new
     const savedEvents = [];
